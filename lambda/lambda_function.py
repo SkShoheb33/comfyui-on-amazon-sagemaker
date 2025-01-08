@@ -105,6 +105,7 @@ def invoke_from_prompt(prompt_file, positive_prompt, lora_name, seed=None, heigh
     prompt_dict = update_seed(prompt_dict, seed)
     prompt_dict = update_prompt_text(prompt_dict, positive_prompt)
     prompt_dict = update_image_size(prompt_dict, height, width)
+    prompt_dict = update_lora_name(prompt_dict, lora_name)
     prompt_text = json.dumps(prompt_dict)
 
     endpoint_name = os.environ["ENDPOINT_NAME"]

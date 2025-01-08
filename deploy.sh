@@ -30,7 +30,7 @@ configure() {
     LAMBDA_FILE="lambda-$(lambda_hash).zip"
 
     # Identifier of SageMaker model and endpoint config
-    MODEL_VERSION="sample"
+    MODEL_VERSION="v1-with-flux-lora"
 
     # Filename of model artifact on S3 bucket
     MODEL_FILE="model-artificact-${MODEL_VERSION}.tgz"

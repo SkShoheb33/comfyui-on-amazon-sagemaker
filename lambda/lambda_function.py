@@ -19,33 +19,22 @@ def update_image_size(prompt_dict, height, width):
     """
     for i in prompt_dict:
         if "inputs" in prompt_dict[i]:
-            if prompt_dict[i]["class_type"] == "EmptySD3LatentImage" and "height" in prompt_dict[i]["inputs"]:
+            if prompt_dict[i]["class_type"] == "EmptyLatentImage":
                 prompt_dict[i]["inputs"]["height"] = height
                 prompt_dict[i]["inputs"]["width"] = width
     return prompt_dict
 
 def update_seed(prompt_dict, seed=None):
     """
-    Update the seed value for the KSampler node in the prompt dictionary.
-
-    Args:
-        prompt_dict (dict): The prompt dictionary containing the node information.
-        seed (int, optional): The seed value to set for the KSampler node. If not provided, a random seed will be generated.
-
-    Returns:
-        dict: The updated prompt dictionary with the seed value set for the KSampler node.
+    Update the seed value in the prompt dictionary.
     """
-    # set seed for KSampler node
+    if seed is None:
+        seed = random.randint(0, int(1e10))
+    
     for i in prompt_dict:
         if "inputs" in prompt_dict[i]:
-            if (
-                prompt_dict[i]["class_type"] == "KSampler"
-                and "seed" in prompt_dict[i]["inputs"]
-            ):
-                if seed is None:
-                    prompt_dict[i]["inputs"]["seed"] = random.randint(0, int(1e10))
-                else:
-                    prompt_dict[i]["inputs"]["seed"] = int(seed)
+            if prompt_dict[i]["class_type"] == "RandomNoise" and "noise_seed" in prompt_dict[i]["inputs"]:
+                prompt_dict[i]["inputs"]["noise_seed"] = seed
     return prompt_dict
 
 

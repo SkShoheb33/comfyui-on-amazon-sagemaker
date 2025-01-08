@@ -1,0 +1,47 @@
+FROM nvidia/cuda:12.1.1-cudnn8-runtime-ubuntu22.04
+
+# Install necessary dependencies along with nginx
+RUN apt-get update && \
+    apt-get upgrade -y && \
+    apt-get -y install --no-install-recommends \
+    git \
+    python3.10 \
+    python3-pip \
+    nginx \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN pip3 install --no-cache-dir torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu121
+
+
+# Set some environment variables. PYTHONUNBUFFERED prevents Python buffering our standard
+# output stream, which means that logs can be delivered to the user quickly. PYTHONDONTWRITEBYTECODE
+# stops Python creating the .pyc files which are unnecessary in this case.
+ENV PYTHONUNBUFFERED=TRUE
+ENV PYTHONDONTWRITEBYTECODE=TRUE
+
+# Git reference of ComfyUI (can be a branch name or commit id)
+ARG COMFYUI_GIT_REF=master
+
+WORKDIR /opt/program
+
+# Install ComfyUI
+RUN git clone https://github.com/comfyanonymous/ComfyUI.git && \
+    cd /opt/program/ComfyUI && \
+    git checkout $COMFYUI_GIT_REF
+RUN pip3 install --no-cache-dir -r /opt/program/ComfyUI/requirements.txt
+
+# Copy extra_model_paths so that ComfyUI load the model artifacts
+COPY extra_model_paths.yaml /opt/program/ComfyUI/
+
+# Copy contents of code/ dir to /opt/program
+COPY code/ /opt/program/
+RUN pip3 install --no-cache-dir -r /opt/program/requirements.txt
+
+#checkov:skip=CKV_DOCKER_3:SageMaker expects all containers to run with root users
+
+# Expose port 8080 for sagemaker inference
+EXPOSE 8080
+ENTRYPOINT ["python3"]
+CMD [ "serve" ]
+HEALTHCHECK CMD curl -fs http://localhost:8080/ping || exit 1

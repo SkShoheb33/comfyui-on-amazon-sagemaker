@@ -17,55 +17,27 @@ def update_image_size(prompt_dict, height, width):
     """
     Update the image size in the prompt dictionary.
     """
-    for i in prompt_dict:
-        if "inputs" in prompt_dict[i]:
-            if prompt_dict[i]["class_type"] == "EmptyLatentImage":
-                prompt_dict[i]["inputs"]["height"] = height
-                prompt_dict[i]["inputs"]["width"] = width
+    prompt_dict["5"]["inputs"]["height"] = height
+    prompt_dict["5"]["inputs"]["width"] = width
     return prompt_dict
 
 def update_seed(prompt_dict, seed=None):
     """
     Update the seed value in the prompt dictionary.
     """
-    if seed is None:
-        seed = random.randint(0, int(1e10))
-    
-    for i in prompt_dict:
-        if "inputs" in prompt_dict[i]:
-            if prompt_dict[i]["class_type"] == "RandomNoise" and "noise_seed" in prompt_dict[i]["inputs"]:
-                prompt_dict[i]["inputs"]["noise_seed"] = seed
+    prompt_dict["25"]["inputs"]["noise_seed "] = seed
     return prompt_dict
 
 
-def update_prompt_text(prompt_dict, positive_prompt,):
+def update_prompt_text(prompt_dict, positive_prompt):
     """
     Update the prompt text in the given prompt dictionary.
-
-    Args:
-        prompt_dict (dict): The dictionary containing the prompt information.
-        positive_prompt (str): The new text to replace the positive prompt placeholder.
-        lora_name (str): The name of the lora to be used in the prompt data.
-
-    Returns:
-        dict: The updated prompt dictionary.
     """
-    # replace prompt text for CLIPTextEncode node
-    for i in prompt_dict:
-        if "inputs" in prompt_dict[i]:
-            if (
-                prompt_dict[i]["class_type"] == "CLIPTextEncode"
-                and "text" in prompt_dict[i]["inputs"]
-            ):
-                if prompt_dict[i]["inputs"]["text"] == "POSITIVE_PROMT_PLACEHOLDER":
-                    prompt_dict[i]["inputs"]["text"] = positive_prompt
+    prompt_dict["6"]["inputs"]["text"] = positive_prompt
     return prompt_dict
 
 def update_lora_name(prompt_dict, lora_name):
-    for i in prompt_dict:
-        if "inputs" in prompt_dict[i]:
-            if prompt_dict[i]["class_type"] == "LoraLoader" and prompt_dict[i]["_meta"]["title"] == "character-lora":
-                prompt_dict[i]["inputs"]["lora_name"] = lora_name
+    prompt_dict["29"]["inputs"]["lora_name"] = lora_name
     return prompt_dict
 
 def invoke_from_prompt(prompt_file, positive_prompt, lora_name, seed=None, height=512, width=512):
@@ -84,7 +56,8 @@ def invoke_from_prompt(prompt_file, positive_prompt, lora_name, seed=None, heigh
     Raises:
         FileNotFoundError: If the prompt file does not exist.
     """
-    logger.info("prompt: %s", prompt_file)
+    logger.info("Parameters: prompt_file=%s, positive_prompt=%s, lora_name=%s, seed=%s, dimensions=%dx%d", 
+                prompt_file, positive_prompt, lora_name, seed, width, height)
 
     # read the prompt data from json file
     with open("./workflow/" + prompt_file) as prompt_file:
@@ -132,18 +105,10 @@ def lambda_handler(event: dict, context: dict):
 
         prompt_file = 'lora_flux_workflow.json'
         positive_prompt = request["positive_prompt"]
-        lora_name = request.get("lora_name", "")
-        seed = request.get("seed")
+        lora_name = request.get("lora_name", "flux/dm7249atlas.safetensors")
+        seed = request.get("seed", 123)
         height = request.get("height", 512)
         width = request.get("width", 512)
-
-        # Log parameters for debugging
-        logger.info("Parameters:")
-        logger.info(f"prompt_file: {prompt_file}")
-        logger.info(f"positive_prompt: {positive_prompt}")
-        logger.info(f"lora_name: {lora_name}")
-        logger.info(f"seed: {seed}")
-        logger.info(f"dimensions: {width}x{height}")
 
         response = invoke_from_prompt(
             prompt_file=prompt_file,
@@ -192,6 +157,6 @@ if __name__ == "__main__":
 
     logging.basicConfig(level=logging.INFO, stream=sys.stdout)
     event = {
-        "body": "{\"positive_prompt\": \"a handsome man smiling\",\"seed\": 123, \"height\": 512, \"width\": 512, \"lora_name\": \"dm7249atlas.safetensors\"}"
+        "body": "{\"positive_prompt\": \"a handsome man smiling\",\"seed\": 123, \"height\": 512, \"width\": 512, \"lora_name\": \"flux/dm7249atlas.safetensors\"}"
     }
     lambda_handler(event, None)

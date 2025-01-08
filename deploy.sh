@@ -54,7 +54,7 @@ configure() {
     SAGEMAKER_AUTO_SCALING="true"
 
     # Authentication type for the Lambda URL (NONE or AWS_IAM)
-    LAMBDA_URL_AUTH_TYPE="AWS_IAM"
+    LAMBDA_URL_AUTH_TYPE=NONE
 }
 
 # Collect variables from AWS environment

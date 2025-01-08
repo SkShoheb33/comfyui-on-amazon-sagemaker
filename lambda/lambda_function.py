@@ -125,25 +125,36 @@ def invoke_from_prompt(prompt_file, positive_prompt, lora_name, seed=None, heigh
 def lambda_handler(event: dict, context: dict):
     """
     Lambda function handler for processing events.
-
-    Args:
-        event (dict): The event from lambda function URL.
-        context (dict): The runtime information of the Lambda function.
-
-    Returns:
-        dict: The response data for lambda function URL.
     """
-    logger.info("Event:")
-    logger.info(json.dumps(event, indent=2))
-    request = json.loads(event["body"])
-
     try:
+        logger.info("Event:")
+        logger.info(json.dumps(event, indent=2))
+        
+        # Validate event has body
+        if not event.get("body"):
+            raise ValueError("Missing request body")
+            
+        request = json.loads(event["body"])
+
+        # Validate required parameters
+        if "positive_prompt" not in request:
+            raise ValueError("Missing required parameter: positive_prompt")
+
         prompt_file = 'lora_flux_workflow.json'
         positive_prompt = request["positive_prompt"]
         lora_name = request.get("lora_name", "")
         seed = request.get("seed")
         height = request.get("height", 512)
         width = request.get("width", 512)
+
+        # Log parameters for debugging
+        logger.info("Parameters:")
+        logger.info(f"prompt_file: {prompt_file}")
+        logger.info(f"positive_prompt: {positive_prompt}")
+        logger.info(f"lora_name: {lora_name}")
+        logger.info(f"seed: {seed}")
+        logger.info(f"dimensions: {width}x{height}")
+
         response = invoke_from_prompt(
             prompt_file=prompt_file,
             positive_prompt=positive_prompt,
@@ -152,26 +163,38 @@ def lambda_handler(event: dict, context: dict):
             height=height,
             width=width,
         )
-    except KeyError as e:
-        logger.error(f"Error: {e}")
+
+        image_data = response["Body"].read()
+
         return {
-            "statusCode": 400,
-            "body": json.dumps(
-                {
-                    "error": "Missing required parameter",
-                }
-            ),
+            "headers": {"Content-Type": response["ContentType"]},
+            "statusCode": response["ResponseMetadata"]["HTTPStatusCode"],
+            "body": base64.b64encode(io.BytesIO(image_data).getvalue()).decode("utf-8"),
+            "isBase64Encoded": True,
         }
 
-    image_data = response["Body"].read()
-
-    result = {
-        "headers": {"Content-Type": response["ContentType"]},
-        "statusCode": response["ResponseMetadata"]["HTTPStatusCode"],
-        "body": base64.b64encode(io.BytesIO(image_data).getvalue()).decode("utf-8"),
-        "isBase64Encoded": True,
-    }
-    return result
+    except json.JSONDecodeError as e:
+        logger.error(f"Invalid JSON in request body: {e}")
+        return {
+            "statusCode": 400,
+            "body": json.dumps({"error": "Invalid JSON in request body"}),
+        }
+    except ValueError as e:
+        logger.error(f"Validation error: {e}")
+        return {
+            "statusCode": 400,
+            "body": json.dumps({"error": str(e)}),
+        }
+    except Exception as e:
+        # Log the full error with traceback
+        logger.error("Unexpected error:", exc_info=True)
+        return {
+            "statusCode": 500,
+            "body": json.dumps({
+                "error": "Internal server error",
+                "details": str(e)
+            }),
+        }
 
 
 if __name__ == "__main__":

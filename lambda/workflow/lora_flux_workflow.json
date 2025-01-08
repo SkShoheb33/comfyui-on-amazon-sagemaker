@@ -139,7 +139,7 @@
   },
   "25": {
     "inputs": {
-      "noise_seed": 626602959570215
+      "noise_seed": 939549826675066
     },
     "class_type": "RandomNoise",
     "_meta": {
@@ -148,7 +148,7 @@
   },
   "29": {
     "inputs": {
-      "lora_name": "dm7249atlas.safetensors",
+      "lora_name": "flux/dm7249atlas.safetensors",
       "strength_model": 1,
       "strength_clip": 1,
       "model": [
@@ -167,7 +167,7 @@
   },
   "30": {
     "inputs": {
-      "lora_name": "FLUX.1-Turbo-Alpha.safetensors",
+      "lora_name": "flux/8-step.safetensors",
       "strength_model": 0.8,
       "strength_clip": 0.8,
       "model": [
